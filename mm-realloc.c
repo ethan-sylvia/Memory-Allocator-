@@ -1,15 +1,3 @@
-/*-------------------------------------------------------------------
- *  UW CSE 351 Lab 5 Starter code:
- *        single doubly-linked free block list with LIFO policy
- *        with support for coalescing adjacent free blocks
- *
- * Terminology:
- * o We will implement an explicit free list allocator.
- * o We use "next" and "previous" to refer to blocks as ordered in
- *   the free list.
- * o We use "following" and "preceding" to refer to adjacent blocks
- *   in memory.
- *-------------------------------------------------------------------- */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,48 +7,12 @@
 #include "memlib.h"
 #include "mm.h"
 
-/* Macros for unscaled pointer arithmetic to keep other code cleaner.
-   Casting to a char* has the effect that pointer arithmetic happens at
-   the byte granularity (i.e. POINTER_ADD(0x1, 1) would be 0x2).  (By
-   default, incrementing a pointer in C has the effect of incrementing
-   it by the size of the type to which it points (e.g. BlockInfo).)
-   We cast the result to void* to force you to cast back to the
-   appropriate type and ensure you don't accidentally use the resulting
-   pointer as a char* implicitly.
-*/
+
 #define UNSCALED_POINTER_ADD(p, x) ((void*)((char*)(p) + (x)))
 #define UNSCALED_POINTER_SUB(p, x) ((void*)((char*)(p) - (x)))
 
 
-/******** FREE LIST IMPLEMENTATION ***********************************/
 
-
-/* A BlockInfo contains information about a block, including the size
-   and usage tags, as well as pointers to the next and previous blocks
-   in the free list.  This is exactly the "explicit free list" structure
-   illustrated in the lecture slides.
-
-   Note that the next and prev pointers and the boundary tag are only
-   needed when the block is free.  To achieve better utilization, mm_malloc
-   should use the space for next and prev as part of the space it returns.
-
-   +--------------+
-   | sizeAndTags  |  <-  BlockInfo pointers in free list point here
-   |  (header)    |
-   +--------------+
-   |     next     |  <-  Pointers returned by mm_malloc point here
-   +--------------+
-   |     prev     |
-   +--------------+
-   |  space and   |
-   |   padding    |
-   |     ...      |
-   |     ...      |
-   +--------------+
-   | boundary tag |
-   |  (footer)    |
-   +--------------+
-*/
 struct BlockInfo {
   // Size of the block (in the high bits) and tags for whether the
   // block and its predecessor in memory are in use.  See the SIZE()
@@ -94,24 +46,7 @@ typedef struct BlockInfo BlockInfo;
 /* Alignment of blocks returned by mm_malloc. */
 #define ALIGNMENT 8
 
-/* SIZE(blockInfo->sizeAndTags) extracts the size of a 'sizeAndTags' field.
-   Also, calling SIZE(size) selects just the higher bits of 'size' to ensure
-   that 'size' is properly aligned.  We align 'size' so we can use the low
-   bits of the sizeAndTags field to tag a block as free/used, etc, like this:
 
-      sizeAndTags:
-      +-------------------------------------------+
-      | 63 | 62 | 61 | 60 |  . . . .  | 2 | 1 | 0 |
-      +-------------------------------------------+
-        ^                                       ^
-      high bit                               low bit
-
-   Since ALIGNMENT == 8, we reserve the low 3 bits of sizeAndTags for tag
-   bits, and we use bits 3-63 to store the size.
-
-   Bit 0 (2^0 == 1): TAG_USED
-   Bit 1 (2^1 == 2): TAG_PRECEDING_USED
-*/
 #define SIZE(x) ((x) & ~(ALIGNMENT - 1))
 
 /* TAG_USED is the bit mask used in sizeAndTags to mark a block as used. */

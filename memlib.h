@@ -1,11 +1,4 @@
-/**
- * UW CSE 351 Lab 5
- *
- * Extra credit: implementing garbage collection
- *
- * This requires mm_malloc and mm_free to be working correctly, so
- * don't start on this until you finish mm.c.
- */
+
 #include "mm.c"
 
 /* The tag to indicate that a block is marked. */
